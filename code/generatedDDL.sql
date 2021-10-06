@@ -1,7 +1,4 @@
-
-
-
-#  the generated DDL
+#  the generated DDL creating external table on redshift cluster
 
 create external table fhir.Claims(
 	"resourceType" varchar(6),
@@ -23,11 +20,14 @@ with serdeproperties ('dots.in.keys' = 'true','mapping.requesttime' = 'requestti
 location 's3://demo-partiql-zutfcihjex/fhir/claims'
 ;
 
+## Querying External Table
 
-https://aws.amazon.com/solutions/implementations/fhir-works-on-aws/
+SELECT c.id,c.status,c.patient.reference as patient_ref,SPLIT_PART(c.patient.reference,’/’,2) as patient_key,
+d.sequence as diag_seq,d.diagnosisReference.reference as diag_ref
+FROM fhir.Claims as c, c.diagnosis as d
+WHERE c.status = ‘active’
 
-https://docs.aws.amazon.com/solutions/latest/fhir-works-on-aws/cost.html
 
-https://docs.aws.amazon.com/solutions/latest/fhir-works-on-aws/architecture-overview.html
-
-https://github.com/awslabs/fhir-works-on-aws-deployment/tree/aws-solution
+SELECT c.status,count(*) as cnt, sum(c.total.value) as total
+FROM fhir.Claims as c
+GROUP BY c.status,c.patient.reference
